@@ -63,7 +63,7 @@ jobs:
               with:
                 repository: technogix/vault
                 path: vault
-                ref: temp
+                ref: main
                 token: ${{ secrets.GH_ACCESS_TOKEN }}
 
             - name: Launching tests
