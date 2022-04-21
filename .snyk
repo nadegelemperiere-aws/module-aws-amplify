@@ -1,0 +1,7 @@
+version: v1.19.0
+ignore:
+  SNYK-CC-TF-74:
+    - 'test/data/simple-react/main.tf > *':
+        reason: Credentials are retrieved from the vault and the tfvars file is only available in runners
+        expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-11T11:20:00.000Z
