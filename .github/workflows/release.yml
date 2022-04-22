@@ -64,7 +64,6 @@ jobs:
                 token: ${{ secrets.GH_ACCESS_TOKEN }}
 
             - name: Launching tests
-              continue-on-error: true
               env:
                 VAULT_KEY: ${{ secrets.VAULT_KEY }}
               uses: docker://technogix/terraform-python-awscli:v2.0.0
