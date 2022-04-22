@@ -4,4 +4,42 @@ ignore:
     - 'test/data/simple-react/main.tf > *':
         reason: Credentials are retrieved from the vault and the tfvars file is only available in runners
         expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-11T11:20:00.000
+    - 'test/data/logging/main.tf > *':
+        reason: Credentials are retrieved from the vault and the tfvars file is only available in runners
+        expires: 2030-03-11T00:00:00.000Z
         created: 2022-03-11T11:20:00.000Z
+    - 'test/data/authentication/main.tf > *':
+        reason: Credentials are retrieved from the vault and the tfvars file is only available in runners
+        expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-11T11:20:00.000Z
+    - 'test/data/domain/main.tf > *':
+        reason: Credentials are retrieved from the vault and the tfvars file is only available in runners
+        expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-11T11:20:00.000Z
+  SNYK-CC-TF-142:
+    - 'main.tf > *':
+        reason: Logging config is optional but it does exist
+        expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-11T11:20:00.000Z
+  SNYK-CC-TF-4:
+    - 'test/data/logging/main.tf > *':
+        reason: Bucket is only there for test purpose, and therefore does not need to be encrypted
+        expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-13T15:12:00.000Z
+  SNYK-CC-TF-127:
+    - 'test/data/logging/main.tf > *':
+        reason: Bucket is just for testing purpose and shall be able to be deleted on the spot
+        expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-11T18:24:00.000Z
+  SNYK-CC-TF-45:
+    - 'test/data/logging/main.tf > *':
+        reason: Bucket is just for testing purpose and does not need access logging
+        expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-11T18:24:00.000Z
+  SNYK-CC-TF-124:
+    - 'test/data/logging/main.tf > *':
+        reason: Bucket is just for testing purpose and versions are not managed
+        expires: 2030-03-11T00:00:00.000Z
+        created: 2022-03-11T18:24:00.000Z
+
