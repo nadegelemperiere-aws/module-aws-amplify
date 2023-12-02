@@ -1,33 +1,31 @@
 # -------------------------------------------------------
-# TECHNOGIX
-# -------------------------------------------------------
-# Copyright (c) [2022] Technogix SARL
+# Copyright (c) [2022] Nadege Lemperiere
 # All rights reserved
 # -------------------------------------------------------
 # Robotframework test suite for module
 # -------------------------------------------------------
 # Nadège LEMPERIERE, @07 march 2022
-# Latest revision: 07 march 2022
+# Latest revision: 01 december 2023
 # -------------------------------------------------------
 
 
 *** Settings ***
 Documentation   A test case to check multiple repositories creation using module
-Library         technogix_iac_keywords.terraform
-Library         technogix_iac_keywords.keepass
-Library         technogix_iac_keywords.amplify
-Library         technogix_iac_keywords.cloudfront
-Library         technogix_iac_keywords.route53
+Library         aws_iac_keywords.terraform
+Library         aws_iac_keywords.keepass
+Library         aws_iac_keywords.amplify
+Library         aws_iac_keywords.cloudfront
+Library         aws_iac_keywords.route53
 Library         ../keywords/data.py
 Library         OperatingSystem
 
 *** Variables ***
 ${KEEPASS_DATABASE}                 ${vaultdatabase}
 ${KEEPASS_KEY_ENV}                  ${vault_key_env}
-${KEEPASS_PRINCIPAL_KEY_ENTRY}      /engineering-environment/aws/aws-principal-access-key
-${KEEPASS_PRINCIPAL_USERNAME}       /engineering-environment/aws/aws-principal-credentials
-${KEEPASS_ACCOUNT}                  /engineering-environment/aws/aws-account
-${GITHUB_CICD_TOKEN}                /engineering-environment/github/github-cicd-access-token
+${KEEPASS_PRINCIPAL_KEY_ENTRY}      /aws/aws-principal-access-key
+${KEEPASS_PRINCIPAL_USERNAME}       /aws/aws-principal-credentials
+${KEEPASS_ACCOUNT}                  /aws/aws-account
+${GITHUB_CICD_TOKEN}                /github/github-cicd-access-token
 ${REGION}                           eu-west-1
 
 *** Test Cases ***
@@ -43,7 +41,7 @@ Prepare Environment
     Initialize Amplify      None        ${principal_access}   ${principal_secret}    ${REGION}
     Initialize Cloudfront   None        ${principal_access}   ${principal_secret}    ${REGION}
     Initialize Route53      None        ${principal_access}   ${principal_secret}    ${REGION}
-    ${TF_PARAMETERS}=       Create Dictionary   access_token=${github_token}
+    ${TF_PARAMETERS}=       Create Dictionary   access_token=${github_token}  account=${ACCOUNT}    service_principal=${principal_name}
     Set Global Variable     ${TF_PARAMETERS}
 
 Create Simple React Application

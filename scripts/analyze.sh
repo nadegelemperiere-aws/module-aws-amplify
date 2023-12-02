@@ -1,8 +1,6 @@
 #!/bin/bash
 # -------------------------------------------------------
-# TECHNOGIX
-# -------------------------------------------------------
-# Copyright (c) [2022] Technogix SARL
+# Copyright (c) [2022] Nadege Lemperiere
 # All rights reserved
 # -------------------------------------------------------
 # Module to deploy an aws permission set with all the secure
@@ -19,7 +17,7 @@ scriptpath=`dirname $script`
 
 # Launch tests in docker container
 docker run  -it --rm \
-            --volume $scriptpath/../:/home/technogix/module:rw \
-            --workdir /home/technogix/module \
-            technogix/terraform-python-awscli:v2.0.0 \
+            --volume $scriptpath/../:/home/test/module:rw \
+            --workdir /home/test/module \
+            nadegelemperiere/terraform-python-awscli:v3.0.0 \
             ./scripts/lint.sh $@
