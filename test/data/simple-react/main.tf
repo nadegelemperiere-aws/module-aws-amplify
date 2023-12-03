@@ -1,7 +1,5 @@
 # -------------------------------------------------------
-# TECHNOGIX
-# -------------------------------------------------------
-# Copyright (c) [2022] Technogix.io
+# Copyright (c) [2022] Nadege Lemperiere
 # All rights reserved
 # -------------------------------------------------------
 # Simple deployment for repository testing
@@ -22,7 +20,7 @@ module "application" {
 	module 					= "test"
 	git_version 			= "test"
 	name 					= "test"
-	repository				= "https://github.com/technogix/portal.git"
+	repository				= "https://github.com/nadegelemperiere/portal.git"
 	is_spa					= true
 	framework				= "React"
 	access_token			= var.access_token
@@ -61,6 +59,18 @@ variable "region" {
 }
 variable "access_token" {
 	type    	= string
+	sensitive 	= true
+}
+
+# -------------------------------------------------------
+# IAM account which root to use
+# -------------------------------------------------------
+variable "account" {
+	type 		= string
+	sensitive 	= true
+}
+variable "service_principal" {
+	type 		= string
 	sensitive 	= true
 }
 

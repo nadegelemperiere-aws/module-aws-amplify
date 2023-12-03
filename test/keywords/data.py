@@ -1,13 +1,11 @@
 # -------------------------------------------------------
-# TECHNOGIX
-# -------------------------------------------------------
-# Copyright (c) [2022] Technogix SARL
+# Copyright (c) [2022] Nadege Lemperiere
 # All rights reserved
 # -------------------------------------------------------
 # Keywords to create data for module test
 # -------------------------------------------------------
 # Nadège LEMPERIERE, @13 november 2021
-# Latest revision: 13 november 2021
+# Latest revision: 01 december 2023
 # -------------------------------------------------------
 
 # System includes
@@ -37,7 +35,7 @@ def load_simple_react_test_data(application, main, develop, distribution) :
         'status': '200'
     }]
     result['application'][0]['data']['name'] = 'test'
-    result['application'][0]['data']['repository'] = 'https://github.com/technogix/portal.git'
+    result['application'][0]['data']['repository'] = 'https://github.com/nadegelemperiere/portal.git'
     result['application'][0]['data']['platform'] = 'WEB'
     result['application'][0]['data']['environmentVariables'] = {
         '_LIVE_UPDATES' : '[{\"pkg\":\"node\",\"type\":\"nvm\",\"version\":\"17\"}]'
@@ -206,7 +204,7 @@ def load_authentication_test_data(application, main, develop, distribution) :
         'status': '200'
     }]
     result['application'][0]['data']['name'] = 'test'
-    result['application'][0]['data']['repository'] = 'https://github.com/technogix/portal.git'
+    result['application'][0]['data']['repository'] = 'https://github.com/nadegelemperiere/portal.git'
     result['application'][0]['data']['platform'] = 'WEB'
     result['application'][0]['data']['environmentVariables'] = {
         '_LIVE_UPDATES' : '[{\"pkg\":\"node\",\"type\":\"nvm\",\"version\":\"17\"}]'
@@ -244,7 +242,6 @@ def load_authentication_test_data(application, main, develop, distribution) :
                 '_LIVE_UPDATES' : '[{\"pkg\":\"node\",\"type\":\"nvm\",\"version\":\"17\"}]'
             },
             'enableBasicAuth'       : True,
-            'basicAuthCredentials'  : 'dGVzdDp0ZXN0',
             'tags'                  : {
                 'Version'       : 'test',
                 'Name'          : 'test.test.test.develop.test',
@@ -380,7 +377,7 @@ def load_logging_test_data(application, main, develop, distribution, bucket) :
     }]
     result['application'][0]['data']['enableBasicAuth'] = False
     result['application'][0]['data']['name'] = 'test'
-    result['application'][0]['data']['repository'] = 'https://github.com/technogix/portal.git'
+    result['application'][0]['data']['repository'] = 'https://github.com/nadegelemperiere/portal.git'
     result['application'][0]['data']['platform'] = 'WEB'
     result['application'][0]['data']['environmentVariables'] = {
         '_LIVE_UPDATES' : '[{\"pkg\":\"node\",\"type\":\"nvm\",\"version\":\"17\"}]'
@@ -551,7 +548,7 @@ def load_domain_test_data(application, main, develop, distribution, zone, certif
         'status': '200'
     }]
     result['application'][0]['data']['name'] = 'test'
-    result['application'][0]['data']['repository'] = 'https://github.com/technogix/portal.git'
+    result['application'][0]['data']['repository'] = 'https://github.com/nadegelemperiere/portal.git'
     result['application'][0]['data']['platform'] = 'WEB'
     result['application'][0]['data']['environmentVariables'] = {
         '_LIVE_UPDATES' : '[{\"pkg\":\"node\",\"type\":\"nvm\",\"version\":\"17\"}]'

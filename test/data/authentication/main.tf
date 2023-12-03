@@ -1,7 +1,5 @@
 # -------------------------------------------------------
-# TECHNOGIX
-# -------------------------------------------------------
-# Copyright (c) [2022] Technogix.io
+# Copyright (c) [2022] Nadege Lemperiere
 # All rights reserved
 # -------------------------------------------------------
 # Simple deployment for repository testing
@@ -22,12 +20,13 @@ module "application" {
 	module 					= "test"
 	git_version 			= "test"
 	name 					= "test"
-	repository				= "https://github.com/technogix/portal.git"
+	repository				= "https://github.com/nadegelemperiere/portal.git"
 	framework				= "React"
 	access_token			= var.access_token
 	env						= { _LIVE_UPDATES = "[{\"pkg\":\"node\",\"type\":\"nvm\",\"version\":\"17\"}]"}
-	authentication			= "dGVzdDp0ZXN0" # test:test encoded
+	authentication			= base64encode("test:testtest")
 }
+
 
 # -------------------------------------------------------
 # Terraform configuration
@@ -61,6 +60,18 @@ variable "region" {
 }
 variable "access_token" {
 	type    	= string
+	sensitive 	= true
+}
+
+# -------------------------------------------------------
+# IAM account which root to use
+# -------------------------------------------------------
+variable "account" {
+	type 		= string
+	sensitive 	= true
+}
+variable "service_principal" {
+	type 		= string
 	sensitive 	= true
 }
 

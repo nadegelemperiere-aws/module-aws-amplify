@@ -1,7 +1,5 @@
 # -------------------------------------------------------
-# TECHNOGIX
-# -------------------------------------------------------
-# Copyright (c) [2022] Technogix.io
+# Copyright (c) [2022] Nadege Lemperiere
 # All rights reserved
 # -------------------------------------------------------
 # Simple deployment for repository testing
@@ -21,6 +19,40 @@ resource "random_string" "random" {
 resource "aws_s3_bucket" "logging" {
 	bucket = random_string.random.result
 }
+resource "aws_s3_bucket_policy" "logging" {
+
+	bucket = aws_s3_bucket.logging.id
+  	policy = jsonencode({
+    	Version = "2012-10-17"
+		Statement = [
+			{
+				Sid 			= "AllowS3ModificationToRootAndGod"
+				Effect			= "Allow"
+				Principal 	    = {
+					"AWS" 		: ["arn:aws:iam::${var.account}:root", "arn:aws:iam::${var.account}:user/${var.service_principal}"]
+				}
+				Action 			= "s3:*"
+				Resource 		= [ aws_s3_bucket.logging.arn, "${aws_s3_bucket.logging.arn}/*"]
+       		},
+			{
+				Sid 			= "AllowS3ModificationToCloudtrail"
+				Effect			= "Allow"
+				Principal      = {
+					"Service": "cloudfront.amazonaws.com"
+				}
+				Action 			= "s3:*"
+				Resource 		= [ aws_s3_bucket.logging.arn, "${aws_s3_bucket.logging.arn}/*"]
+       		},
+		]
+	})
+}
+resource "aws_s3_bucket_ownership_controls" "logging" {
+	bucket = aws_s3_bucket.logging.id
+
+  	rule {
+    	object_ownership = "BucketOwnerPreferred"
+  	}
+}
 
 # -------------------------------------------------------
 # Create repositories using the current module
@@ -34,7 +66,7 @@ module "application" {
 	module 					= "test"
 	git_version 			= "test"
 	name 					= "test"
-	repository				= "https://github.com/technogix/portal.git"
+	repository				= "https://github.com/nadegelemperiere/portal.git"
 	framework				= "React"
 	access_token			= var.access_token
 	env						= { _LIVE_UPDATES = "[{\"pkg\":\"node\",\"type\":\"nvm\",\"version\":\"17\"}]"}
@@ -77,6 +109,18 @@ variable "region" {
 }
 variable "access_token" {
 	type    	= string
+	sensitive 	= true
+}
+
+# -------------------------------------------------------
+# IAM account which root to use to test access rights settings
+# -------------------------------------------------------
+variable "account" {
+	type 		= string
+	sensitive 	= true
+}
+variable "service_principal" {
+	type 		= string
 	sensitive 	= true
 }
 

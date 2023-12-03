@@ -1,25 +1,20 @@
 # -------------------------------------------------------
-# TECHNOGIX
-# -------------------------------------------------------
-# Copyright (c) [2022] Technogix.io
+# Copyright (c) [2022] Nadege Lemperiere
 # All rights reserved
 # -------------------------------------------------------
 # Module to deploy an ecr repository with all the secure
 # components required
 # -------------------------------------------------------
 # Nadège LEMPERIERE, @07 march 2022
-# Latest revision: 07 march 2022
+# Latest revision: 30 november 2023
 # -------------------------------------------------------
-
-terraform {
-	experiments = [ module_variable_optional_attrs ]
-}
 
 # -------------------------------------------------------
 # Contact e-mail for this deployment
 # -------------------------------------------------------
 variable "email" {
 	type 		= string
+	nullable    = false
 }
 
 # -------------------------------------------------------
@@ -27,6 +22,7 @@ variable "email" {
 # -------------------------------------------------------
 variable "environment" {
 	type 		= string
+	nullable    = false
 }
 
 # -------------------------------------------------------
@@ -34,9 +30,11 @@ variable "environment" {
 # -------------------------------------------------------
 variable "project" {
 	type    	= string
+	nullable    = false
 }
 variable "module" {
 	type 		= string
+	nullable    = false
 }
 
 # -------------------------------------------------------
@@ -45,6 +43,7 @@ variable "module" {
 variable "git_version" {
 	type    	= string
 	default 	= "unmanaged"
+	nullable    = false
 }
 
 # -------------------------------------------------------
