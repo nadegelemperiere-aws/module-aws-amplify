@@ -5,7 +5,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="-1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta content="Robot Framework 4.1.3 (Python 3.10.2 on linux)" name="Generator">
+<meta content="Robot Framework 6.1.1 (Python 3.12.0 on linux)" name="Generator">
 <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKcAAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAAqAAAAAAAAAAAAAAAAAAAALIAAAD/AAAA4AAAANwAAADcAAAA3AAAANwAAADcAAAA3AAAANwAAADcAAAA4AAAAP8AAACxAAAAAAAAAKYAAAD/AAAAuwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC/AAAA/wAAAKkAAAD6AAAAzAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN8AAAD/AAAA+gAAAMMAAAAAAAAAAgAAAGsAAABrAAAAawAAAGsAAABrAAAAawAAAGsAAABrAAAADAAAAAAAAADaAAAA/wAAAPoAAADDAAAAAAAAAIsAAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAANEAAAAAAAAA2gAAAP8AAAD6AAAAwwAAAAAAAAAAAAAAMgAAADIAAAAyAAAAMgAAADIAAAAyAAAAMgAAADIAAAAFAAAAAAAAANoAAAD/AAAA+gAAAMMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADaAAAA/wAAAPoAAADDAAAAAAAAADwAAAB8AAAAAAAAAGAAAABcAAAAAAAAAH8AAABKAAAAAAAAAAAAAAAAAAAA2gAAAP8AAAD6AAAAwwAAAAAAAADCAAAA/wAAACkAAADqAAAA4QAAAAAAAAD7AAAA/wAAALAAAAAGAAAAAAAAANoAAAD/AAAA+gAAAMMAAAAAAAAAIwAAAP4AAAD/AAAA/wAAAGAAAAAAAAAAAAAAAMkAAAD/AAAAigAAAAAAAADaAAAA/wAAAPoAAADDAAAAAAAAAAAAAAAIAAAAcAAAABkAAAAAAAAAAAAAAAAAAAAAAAAAEgAAAAAAAAAAAAAA2gAAAP8AAAD7AAAAywAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN4AAAD/AAAAqwAAAP8AAACvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALIAAAD/AAAAsgAAAAAAAAC5AAAA/wAAAMoAAADAAAAAwAAAAMAAAADAAAAAwAAAAMAAAADAAAAAwAAAAMkAAAD/AAAAvAAAAAAAAAAAAAAAAAAAAKwAAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAArQAAAAAAAAAAwAMAAIABAAAf+AAAP/wAAD/8AAAgBAAAP/wAAD/8AAA//AAAJIwAADHEAAA//AAAP/wAAB/4AACAAQAAwAMAAA==">
 <style media="all" type="text/css">
 /* Generic and misc styles */
@@ -319,6 +319,9 @@ th.stats-col-graph:hover {
     padding: 3px;
     cursor: default;
 }
+.element-header .label {
+    margin-right: 0.5em;
+}
 .name {
     font-weight: bold;
 }
@@ -557,6 +560,9 @@ function toggleSuite(suiteId) {
 }
 function toggleTest(testId) {
     toggleElement(testId, ['keyword']);
+    var test = window.testdata.findLoaded(testId);
+    if (test.status == "FAIL" || test.status == "SKIP")
+        expandFailed(test);
 }
 function toggleKeyword(kwId) {
     toggleElement(kwId, ['keyword']);
@@ -620,7 +626,7 @@ function loadAndExpandElementIds(ids) {
     }
 }
 function expandFailed(element) {
-    if (element.status == "FAIL") {
+    if (element.status == "FAIL" || (element.type == "test" && element.status == "SKIP")) {
         window.elementsToExpand = [element];
         window.expandDecider = function (e) {
             return e.status == "FAIL";
@@ -966,6 +972,7 @@ window.model = (function () {
     }
     function Keyword(data) {
         var kw = createModelObject(data);
+        var flatTypes = ['RETURN', 'BREAK', 'CONTINUE'];
         kw.libname = data.libname;
         kw.fullName = (kw.libname ? kw.libname + '.' : '') + kw.name;
         kw.type = data.type;
@@ -1350,8 +1357,8 @@ window.testdata = function () {
     var _statistics = null;
     var LEVELS = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FAIL', 'SKIP'];
     var STATUSES = ['FAIL', 'PASS', 'SKIP', 'NOT RUN'];
-    var KEYWORD_TYPES = ['KEYWORD', 'SETUP', 'TEARDOWN', 'FOR', 'VAR', 'IF', 'ELSE IF', 'ELSE'];
-    var MESSAGE_TYPE = 8;
+    var KEYWORD_TYPES = ['KEYWORD', 'SETUP', 'TEARDOWN', 'FOR', 'ITERATION', 'IF', 'ELSE IF', 'ELSE', 'RETURN',
+                         'TRY', 'EXCEPT', 'FINALLY', 'WHILE', 'CONTINUE', 'BREAK', 'ERROR'];
     function addElement(elem) {
         if (!elem.id)
             elem.id = uniqueId();
@@ -1372,10 +1379,10 @@ window.testdata = function () {
                 elapsed];
     }
     function createMessage(element, strings) {
-        return model.Message(LEVELS[element[2]],
-                             util.timestamp(element[1]),
-                             strings.get(element[3]),
-                             strings.get(element[4]));
+        return model.Message(LEVELS[element[1]],
+                             util.timestamp(element[0]),
+                             strings.get(element[2]),
+                             strings.get(element[3]));
     }
     function parseStatus(stats) {
         return STATUSES[stats[0]];
@@ -1386,7 +1393,7 @@ window.testdata = function () {
         };
     }
     function createBodyItem(parent, element, strings, index) {
-        if (element[0] == MESSAGE_TYPE)
+        if (element.length < 5)
             return createMessage(element, strings);
         var messages = util.filter(parent.children(), function (child) {
             return child.type == 'message';
@@ -1799,31 +1806,31 @@ function stopPropagation(event) {
 window.output = {};
 </script>
 <script type="text/javascript">
-window.output["suite"] = [1,2,3,0,[],[0,0,80390],[[4,5,6,7,[],[0,27,80360],[],[[8,0,9,[],[1,310,988],[[0,10,11,0,12,13,14,0,[1,311,0],[]],[0,15,16,0,17,18,19,0,[1,311,179],[]],[0,15,16,0,17,20,21,0,[1,490,169],[]],[0,15,16,0,17,22,23,0,[1,659,163],[]],[0,15,16,0,17,24,25,0,[1,822,169],[]],[0,15,16,0,17,26,27,0,[1,991,179],[]],[0,28,29,0,30,31,0,0,[1,1171,0],[]],[0,32,33,0,34,35,0,0,[1,1171,41],[]],[0,36,37,0,34,35,0,0,[1,1212,44],[]],[0,38,39,0,34,35,0,0,[1,1256,40],[]],[0,40,41,0,42,43,44,0,[1,1296,1],[]],[0,45,41,0,46,44,0,0,[1,1297,1],[]]]],[47,0,48,[],[0,1298,17179,49],[[0,50,29,0,51,52,0,0,[0,1299,13508],[[8,14807,5,49]]],[0,53,29,0,54,55,56,0,[3,14807,1],[]],[0,57,58,0,0,59,60,0,[3,14808,0],[]],[0,61,33,0,62,63,0,0,[3,14808,0],[]],[0,64,37,0,65,66,0,0,[3,14808,0],[]],[2,67,29,0,68,52,0,0,[1,14809,3668],[]]]],[69,0,48,[],[0,18478,17070,49],[[0,50,29,0,51,70,0,0,[0,18479,13467],[[8,31945,5,49]]],[0,53,29,0,54,71,56,0,[3,31946,0],[]],[0,72,58,0,0,59,60,0,[3,31946,0],[]],[0,61,33,0,62,63,0,0,[3,31946,0],[]],[0,64,37,0,65,66,0,0,[3,31946,0],[]],[2,67,29,0,68,70,0,0,[1,31947,3600],[]]]],[73,0,48,[],[0,35549,24733,49],[[0,50,29,0,51,74,0,0,[0,35555,14799],[[8,50354,5,49]]],[0,53,29,0,54,75,56,0,[3,50355,0],[]],[0,76,58,0,0,77,60,0,[3,50355,0],[]],[0,61,33,0,62,63,0,0,[3,50355,0],[]],[0,64,37,0,65,66,0,0,[3,50355,0],[]],[2,67,29,0,68,74,0,0,[1,50355,9927],[]]]],[78,0,48,[],[0,60283,20103,49],[[0,50,29,0,51,79,0,0,[0,60284,14606],[[8,74890,5,49]]],[0,53,29,0,54,80,56,0,[3,74890,0],[]],[0,81,58,0,0,82,60,0,[3,74890,0],[]],[0,61,33,0,62,63,0,0,[3,74890,1],[]],[0,64,37,0,65,66,0,0,[3,74891,0],[]],[0,83,39,0,84,85,0,0,[3,74891,0],[]],[2,67,29,0,68,79,0,0,[1,74891,5495],[]]]]],[],[5,1,4,0]]],[],[],[5,1,4,0]];
+window.output["suite"] = [1,2,3,0,[],[1,0,1916875],[[4,5,6,7,[],[1,15,1916858],[],[[8,0,9,[],[1,263,4984],[[0,10,11,0,12,13,14,0,[1,263,0],[]],[0,15,16,0,17,18,19,0,[1,263,940],[]],[0,15,16,0,17,20,21,0,[1,1203,939],[]],[0,15,16,0,17,22,23,0,[1,2142,1003],[]],[0,15,16,0,17,24,25,0,[1,3145,968],[]],[0,15,16,0,17,26,27,0,[1,4113,929],[]],[0,28,29,0,30,31,0,0,[1,5043,0],[]],[0,32,33,0,34,35,0,0,[1,5043,79],[]],[0,36,37,0,34,35,0,0,[1,5122,61],[]],[0,38,39,0,34,35,0,0,[1,5183,63],[]],[0,40,41,0,42,43,44,0,[1,5246,1],[]],[0,45,41,0,46,44,0,0,[1,5247,0],[]]]],[47,0,48,[],[1,5247,444804],[[0,49,29,0,50,51,0,0,[1,5248,219093],[]],[0,52,29,0,53,54,55,0,[1,224341,2],[]],[0,56,57,0,0,58,59,0,[1,224343,2],[]],[0,60,33,0,61,62,0,0,[1,224345,2468],[]],[0,63,37,0,64,65,0,0,[1,226813,590],[]],[2,66,29,0,67,51,0,0,[1,227403,222648],[]]]],[68,0,48,[],[1,450052,435646],[[0,49,29,0,50,69,0,0,[1,450052,231091],[]],[0,52,29,0,53,70,55,0,[1,681144,1],[]],[0,71,57,0,0,58,59,0,[1,681145,1],[]],[0,60,33,0,61,62,0,0,[1,681146,2501],[]],[0,63,37,0,64,65,0,0,[1,683647,444],[]],[2,66,29,0,67,69,0,0,[1,684091,201606],[]]]],[72,0,48,[],[1,885698,471749],[[0,49,29,0,50,73,0,0,[1,885699,221667],[]],[0,52,29,0,53,74,55,0,[1,1107367,1],[]],[0,75,57,0,0,76,59,0,[1,1107368,2],[]],[0,60,33,0,61,62,0,0,[1,1107370,2480],[]],[0,63,37,0,64,65,0,0,[1,1109850,465],[]],[2,66,29,0,67,73,0,0,[1,1110315,247132],[]]]],[77,0,48,[],[1,1357447,559425],[[0,49,29,0,50,78,0,0,[1,1357448,275880],[]],[0,52,29,0,53,79,55,0,[1,1633328,2],[]],[0,80,57,0,0,81,59,0,[1,1633330,2],[]],[0,60,33,0,61,62,0,0,[1,1633332,2334],[]],[0,63,37,0,64,65,0,0,[1,1635666,455],[]],[0,82,39,0,83,84,0,0,[1,1636121,577],[]],[2,66,29,0,67,78,0,0,[1,1636699,280173],[]]]]],[],[5,5,0,0]]],[],[],[5,5,0,0]];
 </script>
 <script type="text/javascript">
 window.output["strings"] = [];
 </script>
 <script type="text/javascript">
-window.output["strings"] = window.output["strings"].concat(["*","*Cases","*/github/workspace/module/test/cases","*../module/test/cases","*Scenarii","*/github/workspace/module/test/cases/scenarii.robot","*../module/test/cases/scenarii.robot","*<p>A test case to check multiple repositories creation using module\x3c/p>","*Prepare Environment","*<p>Retrieve principal credential from database and initialize python tests keywords\x3c/p>","*Get Environment Variable","*OperatingSystem","*<p>Returns the value of an environment variable with the given name.\x3c/p>","*${KEEPASS_KEY_ENV}","*${keepass_key}","*Load Keepass Database Secret","*technogix_iac_keywords.keepass","eNplkMsKgzAQRff9ilk1CgX3rfUjui1djDq2QWNkMgr5+0aDj9JZBOYy51xIPhQPEtY0ESA4qpgEGrYmbC3RgM5BjYIlOsqzoTjlHw7PUKwhQOKEU7j+nUOjOwKxwGvBhN1I0d6Shzg77iMRHLbSKFTP8GajXtj/EDE5FizqjUgaywYFnsp4dVHLuXrB/fyWG2TGZ0uSAkrAy1FoM+/J0a77WDn/wxftTmqN","*${KEEPASS_DATABASE}, ${keepass_key}, ${KEEPASS_PRINCIPAL_KEY_ENTRY}, username","*${principal_access}","*${KEEPASS_DATABASE}, ${keepass_key}, ${KEEPASS_PRINCIPAL_KEY_ENTRY}, password","*${principal_secret}","*${KEEPASS_DATABASE}, ${keepass_key}, ${KEEPASS_PRINCIPAL_USERNAME}, username","*${principal_name}","*${KEEPASS_DATABASE}, ${keepass_key}, ${KEEPASS_ACCOUNT}, password","*${account}","*${KEEPASS_DATABASE}, ${keepass_key}, ${GITHUB_CICD_TOKEN}, password","*${github_token}","*Initialize Terraform","*technogix_iac_keywords.terraform","eNp9j7FuwzAMRPd+xY3tlL0wDGTMEKSAh46FKtMxUUEUSDpG+/WVnRjJFA6CcNK9OzalPWR2Don/CD/0O4v2mNlH7D87RMkDnycNzpLxoTJwIogixEhmX9WwM4pKvlxhY0gJ34SicuGe+mZX2pdm1HqUttzsdV7N9Q3v14zE2J6Giu66EyYjNYTJR8rO8RrPGWG2h+g7ZpWW+ivhsD8+JTw03gjdKq2EYCaRg1MPF1R/bUcXlmmLXn4ti/0DvXJwRw==","*${REGION}, ${principal_access}, ${principal_secret}","*Initialize Amplify","*technogix_iac_keywords.amplify","eNp9jzGPwjAMhff7FR6PiR1VlRgZEEgdbkQhdalFFEe22wp+PWmgAt1Ahih6zvvec5XqXSQjF+iOcMXbxNLCRNbD9q8Bz7GjyyDOiCMchTsKCCzgvEfVUzasFb2gzU/Q3oUAZ4QkPFKLbbVO9U/VS75SnV72fH7VZAWbZ0YgWEZdRjfNAQZFUXCD9RiN/DOeIrhJP6LfmCLN9Qtht91/JXw0XghNkQrBqbInZ9iCMWR/bocj8bBEl1+Cl5n4f5mXnI25wLz9A8sVe64=","*None, ${principal_access}, ${principal_secret}, ${REGION}","*Initialize Cloudfront","*technogix_iac_keywords.cloudfront","*Initialize Route53","*technogix_iac_keywords.route53","*Create Dictionary","*BuiltIn","*<p>Creates and returns a dictionary based on the given <code>items\x3c/code>.\x3c/p>","*access_token=${github_token}","*${TF_PARAMETERS}","*Set Global Variable","*<p>Makes a variable available globally in all tests and suites.\x3c/p>","*Create Simple React Application","*<p>Create Application And Check That The AWS Infrastructure Match Specifications\x3c/p>","*Terraform application failed","*Launch Terraform Deployment","*<p>Launch terraform deployment\x3c/p>\n<hr>\n<p>directory (str) : Deployment directory variables (str) : List of variables to add to the deployment in a tfvars file\x3c/p>","*/github/workspace/module/test/cases/../data/simple-react, ${TF_PARAMETERS}","*Load Terraform States","*<p>Load terraform states from directory\x3c/p>\n<hr>\n<p>directory (str) : Deployment directory env       (str) : Retrieve only states from files .env.tfstate\x3c/p>","*/github/workspace/module/test/cases/../data/simple-react","*${states}","*Load Simple React Test Data","*data","eNpTqS4uSSxJLY5WBxIl6rHR6vmlJQWlJcUgZmJBQU5mcmJJZn4eiFuWmFOaqh5bq6Oggk9XbmImKcpTUstSc/ILSNGRWVxSlJlUiu4uALvMSlE=","*${specs}","*Application Shall Exist And Match","*<p>Check that an amplify application exists that matches the specifications\x3c/p>\n<hr>\n<p>specs    (list) : List of specifications to consider\x3c/p>","*${specs['application']}","*Distribution Shall Exist And Match","*<p>Check that an cloudfront distibution exists that matches the specifications\x3c/p>\n<hr>\n<p>specs    (list) : List of specifications to consider\x3c/p>","*${specs['distribution']}","*Destroy Terraform Deployment","*<p>Destroy terraform deployment\x3c/p>\n<hr>\n<p>directory (str) : Deployment directory variables (str) : List of variables to add to the deployment in a tfvars file\x3c/p>","*Create React Application With Authentication On Develop Url","*/github/workspace/module/test/cases/../data/authentication, ${TF_PARAMETERS}","*/github/workspace/module/test/cases/../data/authentication","*Load Authentication Test Data","*Create React Application With Logging Capabilities","*/github/workspace/module/test/cases/../data/logging, ${TF_PARAMETERS}","*/github/workspace/module/test/cases/../data/logging","*Load Logging Test Data","eNpTqS4uSSxJLY5WBxIl6rHR6vmlJQWlJcUgZmJBQU5mcmJJZn4eiFuWmFOaqh5bq6Oggk9XbmImKcpTUstSc/ILSNGRWVxSlJlUSqK7kkqTs1NLkDUAAKdFW+Q=","*Create React Application With Domain Record","*/github/workspace/module/test/cases/../data/domain, ${TF_PARAMETERS}","*/github/workspace/module/test/cases/../data/domain","*Load Domain Test Data","eNqVkMEKgCAQRH+lg+ClP5KITTdYMHfR1UPRv5fHLoGXYQbmwTDmKgqKxdlX1C7OclWpWroFkUgelDj12CBWtMs9T+aPOoBG6gEbRpYRgopm2urgrsB92XpywgHKY1ba+wsf6gFjlnGR","*Record Shall Exist And Match","*<p>Check that an route53 record exists that matches the specifications\x3c/p>\n<hr>\n<p>specs    (list) : List of specifications to consider\x3c/p>","*${specs['record']}"]);
+window.output["strings"] = window.output["strings"].concat(["*","*Cases","*/github/workspace/module/test/cases","*../module/test/cases","*Scenarii","*/github/workspace/module/test/cases/scenarii.robot","*../module/test/cases/scenarii.robot","*<p>A test case to check multiple repositories creation using module\x3c/p>","*Prepare Environment","*<p>Retrieve principal credential from database and initialize python tests keywords\x3c/p>","*Get Environment Variable","*OperatingSystem","*<p>Returns the value of an environment variable with the given name.\x3c/p>","*${KEEPASS_KEY_ENV}","*${keepass_key}","*Load Keepass Database Secret","*aws_iac_keywords.keepass","eNplkMsKgzAQRff9ilk1CgX3rfUjui1djDq2QWNkMgr5+0aDj9JZBOYy51xIPhQPEtY0ESA4qpgEGrYmbC3RgM5BjYIlOsqzoTjlHw7PUKwhQOKEU7j+nUOjOwKxwGvBhN1I0d6Shzg77iMRHLbSKFTP8GajXtj/EDE5FizqjUgaywYFnsp4dVHLuXrB/fyWG2TGZ0uSAkrAy1FoM+/J0a77WDn/wxftTmqN","*${KEEPASS_DATABASE}, ${keepass_key}, ${KEEPASS_PRINCIPAL_KEY_ENTRY}, username","*${principal_access}","*${KEEPASS_DATABASE}, ${keepass_key}, ${KEEPASS_PRINCIPAL_KEY_ENTRY}, password","*${principal_secret}","*${KEEPASS_DATABASE}, ${keepass_key}, ${KEEPASS_PRINCIPAL_USERNAME}, username","*${principal_name}","*${KEEPASS_DATABASE}, ${keepass_key}, ${KEEPASS_ACCOUNT}, password","*${account}","*${KEEPASS_DATABASE}, ${keepass_key}, ${GITHUB_CICD_TOKEN}, password","*${github_token}","*Initialize Terraform","*aws_iac_keywords.terraform","eNp9j7FuwzAMRPd+xY3tlL0wDGTMEKSAh46FKtMxUUEUSDpG+/WVnRjJFA6CcNK9OzalPWR2Don/CD/0O4v2mNlH7D87RMkDnycNzpLxoTJwIogixEhmX9WwM4pKvlxhY0gJ34SicuGe+mZX2pdm1HqUttzsdV7N9Q3v14zE2J6Giu66EyYjNYTJR8rO8RrPGWG2h+g7ZpWW+ivhsD8+JTw03gjdKq2EYCaRg1MPF1R/bUcXlmmLXn4ti/0DvXJwRw==","*${REGION}, ${principal_access}, ${principal_secret}","*Initialize Amplify","*aws_iac_keywords.amplify","eNp9jzGPwjAMhff7FR6PiR1VlRgZEEgdbkQhdalFFEe22wp+PWmgAt1Ahih6zvvec5XqXSQjF+iOcMXbxNLCRNbD9q8Bz7GjyyDOiCMchTsKCCzgvEfVUzasFb2gzU/Q3oUAZ4QkPFKLbbVO9U/VS75SnV72fH7VZAWbZ0YgWEZdRjfNAQZFUXCD9RiN/DOeIrhJP6LfmCLN9Qtht91/JXw0XghNkQrBqbInZ9iCMWR/bocj8bBEl1+Cl5n4f5mXnI25wLz9A8sVe64=","*None, ${principal_access}, ${principal_secret}, ${REGION}","*Initialize Cloudfront","*aws_iac_keywords.cloudfront","*Initialize Route53","*aws_iac_keywords.route53","*Create Dictionary","*BuiltIn","*<p>Creates and returns a dictionary based on the given <code>items\x3c/code>.\x3c/p>","*access_token=${github_token}, account=${ACCOUNT}, service_principal=${principal_name}","*${TF_PARAMETERS}","*Set Global Variable","*<p>Makes a variable available globally in all tests and suites.\x3c/p>","*Create Simple React Application","*<p>Create Application And Check That The AWS Infrastructure Match Specifications\x3c/p>","*Launch Terraform Deployment","*<p>Launch terraform deployment\x3c/p>\n<hr>\n<p>directory (str) : Deployment directory variables (str) : List of variables to add to the deployment in a tfvars file\x3c/p>","*/github/workspace/module/test/cases/../data/simple-react, ${TF_PARAMETERS}","*Load Terraform States","*<p>Load terraform states from directory\x3c/p>\n<hr>\n<p>directory (str) : Deployment directory env       (str) : Retrieve only states from files .env.tfstate\x3c/p>","*/github/workspace/module/test/cases/../data/simple-react","*${states}","*Load Simple React Test Data","*data","eNpTqS4uSSxJLY5WBxIl6rHR6vmlJQWlJcUgZmJBQU5mcmJJZn4eiFuWmFOaqh5bq6Oggk9XbmImKcpTUstSc/ILSNGRWVxSlJlUiu4uALvMSlE=","*${specs}","*Application Shall Exist And Match","*<p>Check that an amplify application exists that matches the specifications\x3c/p>\n<hr>\n<p>specs    (list) : List of specifications to consider\x3c/p>","*${specs['application']}","*Distribution Shall Exist And Match","*<p>Check that an cloudfront distibution exists that matches the specifications\x3c/p>\n<hr>\n<p>specs    (list) : List of specifications to consider\x3c/p>","*${specs['distribution']}","*Destroy Terraform Deployment","*<p>Destroy terraform deployment\x3c/p>\n<hr>\n<p>directory (str) : Deployment directory variables (str) : List of variables to add to the deployment in a tfvars file\x3c/p>","*Create React Application With Authentication On Develop Url","*/github/workspace/module/test/cases/../data/authentication, ${TF_PARAMETERS}","*/github/workspace/module/test/cases/../data/authentication","*Load Authentication Test Data","*Create React Application With Logging Capabilities","*/github/workspace/module/test/cases/../data/logging, ${TF_PARAMETERS}","*/github/workspace/module/test/cases/../data/logging","*Load Logging Test Data","eNpTqS4uSSxJLY5WBxIl6rHR6vmlJQWlJcUgZmJBQU5mcmJJZn4eiFuWmFOaqh5bq6Oggk9XbmImKcpTUstSc/ILSNGRWVxSlJlUSqK7kkqTs1NLkDUAAKdFW+Q=","*Create React Application With Domain Record","*/github/workspace/module/test/cases/../data/domain, ${TF_PARAMETERS}","*/github/workspace/module/test/cases/../data/domain","*Load Domain Test Data","eNqVkMEKgCAQRH+lg+ClP5KITTdYMHfR1UPRv5fHLoGXYQbmwTDmKgqKxdlX1C7OclWpWroFkUgelDj12CBWtMs9T+aPOoBG6gEbRpYRgopm2urgrsB92XpywgHKY1ba+wsf6gFjlnGR","*Record Shall Exist And Match","*<p>Check that an route53 record exists that matches the specifications\x3c/p>\n<hr>\n<p>specs    (list) : List of specifications to consider\x3c/p>","*${specs['record']}"]);
 </script>
 <script type="text/javascript">
-window.output["stats"] = [[{"elapsed":"00:01:20","fail":4,"label":"All Tests","pass":1,"skip":0}],[],[{"elapsed":"00:01:20","fail":4,"id":"s1","label":"Cases","name":"Cases","pass":1,"skip":0},{"elapsed":"00:01:20","fail":4,"id":"s1-s1","label":"Cases.Scenarii","name":"Scenarii","pass":1,"skip":0}]];
+window.output["stats"] = [[{"elapsed":"00:31:57","fail":0,"label":"All Tests","pass":5,"skip":0}],[],[{"elapsed":"00:31:57","fail":0,"id":"s1","label":"Cases","name":"Cases","pass":5,"skip":0},{"elapsed":"00:31:57","fail":0,"id":"s1-s1","label":"Cases.Scenarii","name":"Scenarii","pass":5,"skip":0}]];
 </script>
 <script type="text/javascript">
 window.output["errors"] = [];
 </script>
 <script type="text/javascript">
-window.output["baseMillis"] = 1650615882220;
+window.output["baseMillis"] = 1701624269427;
 </script>
 <script type="text/javascript">
-window.output["generated"] = 80405;
+window.output["generated"] = 1916884;
 </script>
 <script type="text/javascript">
 window.output["expand_keywords"] = null;
 </script>
 <script type="text/javascript">
-window.settings = {"defaultLevel":"WARN","minLevel":"FAIL","reportURL":"report.html","rpa":false,"splitLogBase":"log","title":""};
+window.settings = {"defaultLevel":"WARN","minLevel":"NONE","reportURL":"report.html","rpa":false,"splitLogBase":"log","title":""};
 </script>
 <title></title>
 </head>
@@ -1924,8 +1931,8 @@ function makeElementVisible(id) {
         util.map(ids, expandElementWithId);
         if (ids.length) {
             expandFailed(window.testdata.findLoaded(util.last(ids)));
-            window.location.hash = '';
             window.location.hash = id;
+            document.getElementById(id).scrollIntoView();
             highlightLinkTarget();
         }
     });
@@ -2123,7 +2130,7 @@ function addExecutionLog(main) {
     <div class="element-header closed" onclick="toggleKeyword('${id}')">
       <div class="element-header-left" title="${type}  {{if name}}{{html fullName}}  {{/if}}[${status}]">
         <span class="elapsed" title="Elapsed time">${times.elapsedTime}</span>
-        <span class="label keyword ${status.toLowerCase()}">${type}</span>
+        <span class="label ${status.toLowerCase()}">${type}</span>
         <span>{{html assign}}</span>
         <span class="name"><span class="parent-name">{{html libname}}{{if libname}} . {{/if}}</span>{{html name}}</span>
         <span class="arg">{{html arguments}}</span>
@@ -2131,7 +2138,7 @@ function addExecutionLog(main) {
       <div class="element-header-right" onclick="stopPropagation(event)">
         <a class="expand" title="Expand all" href="javascript:expandAll('${id}')"></a>
         <a class="collapse" title="Collapse all" href="javascript:collapseAll('${id}')"></a>
-        <a class="link" title="Link to this keyword" href="#${id}" onclick="makeElementVisible('${id}')"></a>
+        <a class="link" title="Link to this item" href="#${id}" onclick="makeElementVisible('${id}')"></a>
       </div>
       <div class="element-header-toggle" title="Toggle visibility"></div>
     </div>
